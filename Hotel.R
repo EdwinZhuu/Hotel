@@ -1,8 +1,10 @@
 # HOTEL project
 library(readxl)
+library(xlsx)
 library(dplyr)
 
-setwd("C:/Users/edwin/Desktop/Volunteer/Datasets/")
+#setwd("C:/Users/edwin/Desktop/Volunteer/Datasets/")
+setwd("C:/Users/Edwin/Desktop/Volunteer/Hotel/")
 
 subjects = read_excel("Baseline cSVD Demo.xlsx", sheet = "demo")
 binary = read_excel("Baseline cSVD Demo.xlsx", sheet = "binary", skip = 1)
@@ -51,6 +53,13 @@ for (i in 1:17){
 binary_control_matrix
 binary_SVD_matrix
 
+empty_row = matrix(ncol = 14, nrow = 1)
+all_shapiro = rbind(binary_control_matrix, empty_row, empty_row)
+all_shapiro = rbind(all_shapiro, binary_SVD_matrix)
+
+write.xlsx(all_shapiro, "Output.xlsx", sheetName = "Binary Shapiro-Wilk",
+                      row.names = TRUE, col.names = TRUE)
+
 # Test the AIC and R squared
 binary_control_matrix_intercept = matrix(ncol = 14, nrow = 17)
 colnames(binary_control_matrix_intercept) = colnames(binary_control[6:19])
@@ -89,11 +98,13 @@ for (a in 1:17){
   }
 }
 
-binary_control_matrix_intercept
-binary_control_matrix_age
-binary_control_matrix_gender
-binary_control_matrix_AG
-binary_control_matrix_education
+empty_col = matrix(nrow = 17, ncol = 1)
+all_normal_lm = cbind(binary_control_matrix_intercept, empty_col, binary_control_matrix_age,
+                      empty_col, binary_control_matrix_gender, empty_col, binary_control_matrix_AG,
+                      empty_col, binary_control_matrix_education)
+
+write.xlsx(all_normal_lm, "Output.xlsx", sheetName = "Linear model for Binary Control",
+           row.names = TRUE, col.names = TRUE, append = TRUE)
 
 binary_SVD_matrix_intercept = matrix(ncol = 14, nrow = 17)
 colnames(binary_SVD_matrix_intercept) = colnames(binary_SVD[6:19])
@@ -138,6 +149,13 @@ binary_SVD_matrix_gender
 binary_SVD_matrix_AG
 binary_SVD_matrix_education
 
+all_normal_SVD_lm = cbind(binary_SVD_matrix_intercept, empty_col, binary_SVD_matrix_age,
+                      empty_col, binary_SVD_matrix_gender, empty_col, binary_SVD_matrix_AG,
+                      empty_col, binary_SVD_matrix_education)
+
+write.xlsx(all_normal_SVD_lm, "Output.xlsx", sheetName = "Linear model for Binary SVD",
+           row.names = TRUE, col.names = TRUE, append = TRUE)
+
 # Weighted distribution
 weighted_control_matrix = matrix(ncol = 14, nrow = 1)
 colnames(weighted_control_matrix) = colnames(weighted_control[6:19])
@@ -159,6 +177,11 @@ for (j in 1:14){
 
 weighted_control_matrix
 weighted_SVD_matrix
+
+all_weighted_distributions = rbind(weighted_control_matrix, empty_row, weighted_SVD_matrix)
+write.xlsx(all_weighted_distributions, "Output.xlsx", sheetName = "Weighted Shapiro Wilk Test",
+           row.names = TRUE, col.names = TRUE, append = TRUE)
+
 
 weighted_control_matrix_lm = matrix(ncol = 14, nrow = 5)
 colnames(weighted_control_matrix_lm) = colnames(weighted_SVD[6:19])
@@ -195,3 +218,8 @@ for (j in 1:14){
 
 weighted_control_matrix_lm
 weighted_SVD_matrix_lm
+
+all_weighted_lm = rbind(weighted_control_matrix_lm, empty_row, weighted_SVD_matrix_lm)
+
+write.xlsx(all_weighted_lm, "Output.xlsx", sheetName = "Weighted linear models",
+           row.names = TRUE, col.names = TRUE, append = TRUE)
