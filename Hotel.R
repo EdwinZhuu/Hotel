@@ -2,9 +2,10 @@
 library(readxl)
 library(xlsx)
 library(dplyr)
+library(leaps)
 
-#setwd("C:/Users/edwin/Desktop/Volunteer/Datasets/")
-setwd("C:/Users/Edwin/Desktop/Volunteer/Hotel/")
+setwd("C:/Users/edwin/Desktop/Volunteer/Datasets/")
+#setwd("C:/Users/Edwin/Desktop/Volunteer/Hotel/")
 
 subjects = read_excel("Baseline cSVD Demo.xlsx", sheet = "demo")
 binary = read_excel("Baseline cSVD Demo.xlsx", sheet = "binary", skip = 1)
@@ -223,3 +224,42 @@ all_weighted_lm = rbind(weighted_control_matrix_lm, empty_row, weighted_SVD_matr
 
 write.xlsx(all_weighted_lm, "Output.xlsx", sheetName = "Weighted linear models",
            row.names = TRUE, col.names = TRUE, append = TRUE)
+
+# Hybrid Stepwise Function
+fit.start = lm(binary_control[,9] ~ 1)
+fit.end = lm(binary_control[,9] ~ binary_control$Age + binary_control$Gender + binary_control$Education)
+
+step.AIC = step(fit.start, list(upper = fit.end), k = 2)
+
+extractAIC(step.AIC)[2]
+
+all.densities = replicate(17,data.frame(Parameter = character(0),
+                  AIC = double(0),
+                  `Linear Model` = character(0),
+                  stringsAsFactors = FALSE), simplify = FALSE)
+names(all.densities) <- paste0('density', seq(from = 0.08, to = 0.40, by=0.02))
+all.densities
+
+for (i in 1:17){
+  x = 6 + (i-1)*15
+  for (j in 1:14){
+    fit.start = lm(binary_control[,x] ~ 1)
+    fit.end = lm(binary_control[,x] ~ binary_control$Age + binary_control$Gender + binary_control$Education)
+    
+    step.AIC = step(fit.start, list(upper = fit.end), k = 2)
+    names = paste(colnames(model.matrix(step.AIC)),collapse=" ")
+    names = gsub("binary_control\\$", "", names, perl = TRUE)
+    names = gsub("\\(", "", names, perl = TRUE)
+    names = gsub("\\)", "", names, perl = TRUE)
+    
+    all.densities[[i]][j,1] = colnames(binary_control)[x]
+    all.densities[[i]][j,2] = extractAIC(step.AIC)[2]
+    all.densities[[i]][j,3] = names
+    
+    x = x+1
+  }
+}
+
+all.densities.combined = do.call("cbind", all.densities)
+
+write.xlsx(all.densities.combined, "../Hotel/Output.xlsx", sheetName = "AIC", append =TRUE) 
