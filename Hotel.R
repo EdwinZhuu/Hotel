@@ -226,12 +226,12 @@ write.xlsx(all_weighted_lm, "Output.xlsx", sheetName = "Weighted linear models",
            row.names = TRUE, col.names = TRUE, append = TRUE)
 
 # Hybrid Stepwise Function
-fit.start = lm(binary_control[,9] ~ 1)
-fit.end = lm(binary_control[,9] ~ binary_control$Age + binary_control$Gender + binary_control$Education)
+#fit.start = lm(binary_control[,9] ~ 1)
+#fit.end = lm(binary_control[,9] ~ binary_control$Age + binary_control$Gender + binary_control$Education)
 
-step.AIC = step(fit.start, list(upper = fit.end), k = 2)
+#step.AIC = step(fit.start, list(upper = fit.end), k = 2)
 
-extractAIC(step.AIC)[2]
+#extractAIC(step.AIC)[2]
 
 all.densities = replicate(17,data.frame(Parameter = character(0),
                   AIC = double(0),
@@ -262,4 +262,82 @@ for (i in 1:17){
 
 all.densities.combined = do.call("cbind", all.densities)
 
-write.xlsx(all.densities.combined, "../Hotel/Output.xlsx", sheetName = "AIC", append =TRUE) 
+write.xlsx(all.densities.combined, "../Hotel/Output.xlsx", sheetName = "AIC Binary Control", append =TRUE) 
+
+# Binary SVD
+all.densities.SVD = replicate(17,data.frame(Parameter = character(0),
+                                        AIC = double(0),
+                                        `Linear Model` = character(0),
+                                        stringsAsFactors = FALSE), simplify = FALSE)
+names(all.densities.SVD) <- paste0('density', seq(from = 0.08, to = 0.40, by=0.02))
+
+for (i in 1:17){
+  x = 6 + (i-1)*15
+  for (j in 1:14){
+    fit.start2 = lm(binary_SVD[,x] ~ 1)
+    fit.end2 = lm(binary_SVD[,x] ~ binary_SVD$Age + binary_SVD$Gender + binary_SVD$Education)
+    
+    step.AIC2 = step(fit.start2, list(upper = fit.end2), k = 2)
+    names = paste(colnames(model.matrix(step.AIC2)),collapse=" ")
+    names = gsub("binary_SVD\\$", "", names, perl = TRUE)
+    names = gsub("\\(", "", names, perl = TRUE)
+    names = gsub("\\)", "", names, perl = TRUE)
+    
+    all.densities.SVD[[i]][j,1] = colnames(binary_SVD)[x]
+    all.densities.SVD[[i]][j,2] = extractAIC(step.AIC2)[2]
+    all.densities.SVD[[i]][j,3] = names
+    
+    x = x+1
+  }
+}
+all.densities.SVD
+
+all.densities.combined.SVD = do.call("cbind", all.densities.SVD)
+
+write.xlsx(all.densities.combined.SVD, "../Hotel/Output.xlsx", sheetName = "AIC Binary SVD", append =TRUE) 
+
+# Weighted Control and SVD
+weighted.densities.Control = data.frame(Parameter = character(0),
+                                        AIC = double(0),
+                                        `Linear Model` = character(0),
+                                        stringsAsFactors = FALSE)
+weighted.densities.SVD = data.frame(Parameter = character(0),
+                                        AIC = double(0),
+                                        `Linear Model` = character(0),
+                                        stringsAsFactors = FALSE)
+
+for (j in 1:14){
+  x = j+5
+  fit.start3 = lm(weighted_control[,x] ~ 1)
+  fit.end3 = lm(weighted_control[,x] ~ weighted_control$Age + weighted_control$Gender + weighted_control$Education)
+  
+  fit.start4 = lm(weighted_SVD[,x] ~ 1)
+  fit.end4 = lm(weighted_SVD[,x] ~ weighted_SVD$Age + weighted_SVD$Gender + weighted_SVD$Education)
+    
+  step.AIC3 = step(fit.start3, list(upper = fit.end3), k = 2)
+  step.AIC4 = step(fit.start4, list(upper = fit.end4), k = 2)
+  
+  names = paste(colnames(model.matrix(step.AIC3)),collapse=" ")
+  names = gsub("weighted_control\\$", "", names, perl = TRUE)
+  names = gsub("\\(", "", names, perl = TRUE)
+  names = gsub("\\)", "", names, perl = TRUE)
+  
+  names2 = paste(colnames(model.matrix(step.AIC4)),collapse=" ")
+  names2 = gsub("weighted_SVD\\$", "", names2, perl = TRUE)
+  names2 = gsub("\\(", "", names2, perl = TRUE)
+  names2 = gsub("\\)", "", names2, perl = TRUE)
+    
+  weighted.densities.Control[j,1] = colnames(weighted_control)[x]
+  weighted.densities.Control[j,2] = extractAIC(step.AIC3)[2]
+  weighted.densities.Control[j,3] = names
+  
+  weighted.densities.SVD[j,1] = colnames(weighted_SVD)[x]
+  weighted.densities.SVD[j,2] = extractAIC(step.AIC4)[2]
+  weighted.densities.SVD[j,3] = names2
+}
+
+all.weighted.densities = cbind(weighted.densities.Control, weighted.densities.SVD)
+
+all.weighted.densities
+
+write.xlsx(all.weighted.densities, "../Hotel/Output.xlsx", sheetName = "AIC Weighted", append =TRUE) 
