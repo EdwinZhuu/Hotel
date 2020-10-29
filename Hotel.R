@@ -4,8 +4,8 @@ library(xlsx)
 library(dplyr)
 library(leaps)
 
-setwd("C:/Users/edwin/Desktop/Volunteer/Datasets/")
-#setwd("C:/Users/Edwin/Desktop/Volunteer/Hotel/")
+#setwd("C:/Users/edwin/Desktop/Volunteer/Datasets/")
+setwd("C:/Users/Edwin/Desktop/Volunteer/Hotel/")
 
 subjects = read_excel("Baseline cSVD Demo.xlsx", sheet = "demo")
 binary = read_excel("Baseline cSVD Demo.xlsx", sheet = "binary", skip = 1)
